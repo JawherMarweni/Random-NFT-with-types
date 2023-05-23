@@ -42,7 +42,7 @@ describe("nftContract", function () {
     const tokenId = mintedTokenIDs[0];
 
     const tokenType = await nftContract.getTokenType(tokenId);
-    console.log("token type : ", tokenType);
+    console.log("Token type : ", tokenType);
     expect(tokenType).to.equal(0);
   });
   it("Should mint NFT with type 1", async function () {
@@ -66,7 +66,7 @@ describe("nftContract", function () {
     tokenId = mintedTokenIDs[0];
 
     const tokenType = await nftContract.getTokenType(tokenId);
-    console.log("token type : ", tokenType);
+    console.log("Token type : ", tokenType);
     expect(tokenType).to.equal(1);
   });
   it("Should mint NFT with type 2", async function () {
@@ -90,10 +90,10 @@ describe("nftContract", function () {
     tokenId = mintedTokenIDs[0];
 
     const tokenType = await nftContract.getTokenType(tokenId);
-    console.log("token type : ", tokenType);
+    console.log("Token type : ", tokenType);
     expect(tokenType).to.equal(2);
   });
-  it("Should mint NFT with type 0 and 1", async function () {
+  it("Should mint NFTs with type 0 and 1", async function () {
     const totalCost = type0Price.add(type1Price);
     const tx = await nftContract.publicMint([0, 1], {
       value: totalCost,
@@ -115,12 +115,12 @@ describe("nftContract", function () {
     const token0Type = await nftContract.getTokenType(mintedTokenIDs[0]);
     const token1Type = await nftContract.getTokenType(mintedTokenIDs[1]);
 
-    console.log("token 0 type : ", token0Type);
-    console.log("token 1 type : ", token1Type);
+    console.log("Token 0 type : ", token0Type);
+    console.log("Token 1 type : ", token1Type);
     expect(token0Type).to.equal(0);
     expect(token1Type).to.equal(1);
   });
-  it("Should mint NFT with type 0, 1 and 2", async function () {
+  it("Should mint NFTs with type 0, 1, and 2", async function () {
     const totalCost = type0Price.add(type1Price).add(type2Price);
     const tx = await nftContract.publicMint([0, 1, 2], {
       value: totalCost,
@@ -143,14 +143,14 @@ describe("nftContract", function () {
     const token1Type = await nftContract.getTokenType(mintedTokenIDs[1]);
     const token2Type = await nftContract.getTokenType(mintedTokenIDs[2]);
 
-    console.log("token 0 type : ", token0Type);
-    console.log("token 1 type : ", token1Type);
-    console.log("token 2 type : ", token2Type);
+    console.log("Token 0 type : ", token0Type);
+    console.log("Token 1 type : ", token1Type);
+    console.log("Token 2 type : ", token2Type);
     expect(token0Type).to.equal(0);
     expect(token1Type).to.equal(1);
     expect(token2Type).to.equal(2);
   });
-  it("Should mint NFT with type 1, 1 and 1", async function () {
+  it("Should mint NFTs with type 1, 1, and 1", async function () {
     const totalCost = type0Price.add(type1Price).add(type2Price);
     const tx = await nftContract.publicMint([1, 1, 1], {
       value: totalCost,
@@ -173,9 +173,9 @@ describe("nftContract", function () {
     const token1Type = await nftContract.getTokenType(mintedTokenIDs[1]);
     const token2Type = await nftContract.getTokenType(mintedTokenIDs[2]);
 
-    console.log("token 0 type : ", token0Type);
-    console.log("token 1 type : ", token1Type);
-    console.log("token 2 type : ", token2Type);
+    console.log("Token 0 type : ", token0Type);
+    console.log("Token 1 type : ", token1Type);
+    console.log("Token 2 type : ", token2Type);
     expect(token0Type).to.equal(1);
     expect(token1Type).to.equal(1);
     expect(token2Type).to.equal(1);
@@ -213,7 +213,7 @@ describe("nftContract", function () {
     }
     expect(revert).to.equal(true);
   });
-  it("Should revert if mint more than 300 NFTs of type 0", async function () {
+  it("Should revert if minting more than 300 NFTs of type 0", async function () {
     let revert1 = false;
     let revert2 = false;
     try {
@@ -232,12 +232,13 @@ describe("nftContract", function () {
     } catch (error) {
       revert2 = true;
     }
-    console.log(revert1);
-    console.log(revert2);
+    console.log("Reverting after minting exactly 300 NFTs of type 0:", revert1);
+    console.log("Reverting after minting one NFT after 300 minted:", revert2);
+
     expect(revert1).to.equal(false);
     expect(revert2).to.equal(true);
   });
-  it("Should revert if mint more than 300 NFTs of type 1", async function () {
+  it("Should revert if minting more than 300 NFTs of type 1", async function () {
     let revert1 = false;
     let revert2 = false;
     try {
@@ -256,12 +257,13 @@ describe("nftContract", function () {
     } catch (error) {
       revert2 = true;
     }
-    console.log(revert1);
-    console.log(revert2);
+    console.log("Reverting after minting exactly 300 NFTs of type 1:", revert1);
+    console.log("Reverting after minting one NFT after 300 minted:", revert2);
+
     expect(revert1).to.equal(false);
     expect(revert2).to.equal(true);
   });
-  it("Should revert if mint more than 400 NFTs of type 2", async function () {
+  it("Should revert if minting more than 400 NFTs of type 2", async function () {
     let revert1 = false;
     let revert2 = false;
     try {
@@ -280,12 +282,13 @@ describe("nftContract", function () {
     } catch (error) {
       revert2 = true;
     }
-    console.log(revert1);
-    console.log(revert2);
+    console.log("Reverting after minting exactly 400 NFTs of type 2:", revert1);
+    console.log("Reverting after minting one NFT after 400 minted:", revert2);
+
     expect(revert1).to.equal(false);
     expect(revert2).to.equal(true);
   });
-  it("Should mint different 300 NFTs of type 0", async function () {
+  it("Should mint 300 different NFTs of type 0", async function () {
     const nftIDs = [];
     for (let i = 0; i < 300; i++) {
       let tx = await nftContract.publicMint([0], {
@@ -309,10 +312,10 @@ describe("nftContract", function () {
       nftIDs.push(tokenId);
     }
     const set = new Set(nftIDs);
-    console.log("different NFTs type0 count : ", set.size);
+    console.log("Number of different NFTs minted (type 0):", set.size);
     expect(set.size).to.equal(300);
   });
-  it("Should mint different 300 NFTs of type 1", async function () {
+  it("Should mint 300 different NFTs of type 1", async function () {
     const nftIDs = [];
     for (let i = 0; i < 300; i++) {
       let tx = await nftContract.publicMint([1], {
@@ -336,10 +339,10 @@ describe("nftContract", function () {
       nftIDs.push(tokenId);
     }
     const set = new Set(nftIDs);
-    console.log("different NFTs type1 count : ", set.size);
+    console.log("Number of different NFTs minted (type 1):", set.size);
     expect(set.size).to.equal(300);
   });
-  it("Should mint different 400 NFTs of type 2", async function () {
+  it("Should mint 400 different NFTs of type 2", async function () {
     const nftIDs = [];
     for (let i = 0; i < 400; i++) {
       let tx = await nftContract.publicMint([2], {
@@ -363,7 +366,7 @@ describe("nftContract", function () {
       nftIDs.push(tokenId);
     }
     const set = new Set(nftIDs);
-    console.log("different NFTs type2 count : ", set.size);
+    console.log("Number of different NFTs minted (type 2):", set.size);
     expect(set.size).to.equal(400);
   });
 });
