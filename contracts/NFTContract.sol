@@ -1016,6 +1016,7 @@ contract NFTContract is newerRandom,ERC721 {
     uint256[] inclusiveLowerBorders =[1,300,600];
     uint256[] inclusiveUpperBorders =[299,599,1000];
     
+
     constructor() newerRandom(inclusiveLowerBorders, inclusiveUpperBorders) ERC721('NFTContract', 'NFTC') {
     }
 
@@ -1058,21 +1059,25 @@ contract NFTContract is newerRandom,ERC721 {
         ownerAddress = _ownerAddress;
     }
     
-    function publicMint(uint256[] calldata types) external payable {
+    function publicMint(uint256[] calldata types) external payable returns (uint256[] memory){
         require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
         require(!_paused, "Minting is paused");
 
         uint256 totalCost = calculateTotalCost(types);
         require(msg.value >= totalCost, "Insufficient funds sent");
 
+        uint256[] memory mintedTokenIDs = new uint256[](types.length);
+
         for (uint256 i = 0; i < types.length; i++) {
             uint256 nftType = types[i];
             uint256 tokenID = getNextRandom(nftType);
             _safeMint(msg.sender, tokenID);
+            mintedTokenIDs[i] = tokenID;
             updateTotalSupply(nftType);
         }
-
+        
         refundExcessPayment(totalCost);
+        return mintedTokenIDs;
     }
 
     function calculateTotalCost(uint256[] calldata types) internal view returns (uint256) {
@@ -1108,6 +1113,12 @@ contract NFTContract is newerRandom,ERC721 {
         }
     }
     
+    function getTokenType(uint256 tokenID) public pure returns(uint8){
+        require(tokenID >= 1 && tokenID <=1000, "Invalid TokenID");
+        if(tokenID >= 1 && tokenID <=299) return 0;
+        if(tokenID >= 300 && tokenID <=599) return 1;
+        if(tokenID >= 600 && tokenID <=1000) return 2;
+    }
     function distributeFunds() public payable {
         require(msg.value > 0, "No funds to distribute");
 
