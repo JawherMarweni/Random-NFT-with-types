@@ -191,17 +191,6 @@ describe("nftContract", function () {
     }
     expect(revert).to.equal(true);
   });
-  it("Should revert if insufficient funds are sent", async function () {
-    let revert = false;
-    try {
-      const tx = await nftContract.publicMint([1, 2], {
-        value: type0Price,
-      });
-    } catch (error) {
-      revert = true;
-    }
-    expect(revert).to.equal(true);
-  });
   it("Should revert if input more than 3 NFTs", async function () {
     let revert = false;
     try {
@@ -213,11 +202,22 @@ describe("nftContract", function () {
     }
     expect(revert).to.equal(true);
   });
-  it("Should revert if mint more than 299 NFTs of type 0", async function () {
+  it("Should revert if insufficient funds are sent", async function () {
+    let revert = false;
+    try {
+      const tx = await nftContract.publicMint([1, 2], {
+        value: type0Price,
+      });
+    } catch (error) {
+      revert = true;
+    }
+    expect(revert).to.equal(true);
+  });
+  it("Should revert if mint more than 300 NFTs of type 0", async function () {
     let revert1 = false;
     let revert2 = false;
     try {
-      for (let i = 0; i < 299; i++) {
+      for (let i = 0; i < 300; i++) {
         const tx = await nftContract.publicMint([0], {
           value: type0Price,
         });
@@ -261,11 +261,11 @@ describe("nftContract", function () {
     expect(revert1).to.equal(false);
     expect(revert2).to.equal(true);
   });
-  it("Should revert if mint more than 401 NFTs of type 2", async function () {
+  it("Should revert if mint more than 400 NFTs of type 2", async function () {
     let revert1 = false;
     let revert2 = false;
     try {
-      for (let i = 0; i < 401; i++) {
+      for (let i = 0; i < 400; i++) {
         const tx = await nftContract.publicMint([2], {
           value: type2Price,
         });
@@ -285,9 +285,9 @@ describe("nftContract", function () {
     expect(revert1).to.equal(false);
     expect(revert2).to.equal(true);
   });
-  it("Should mint different 299 NFTs of type 0", async function () {
+  it("Should mint different 300 NFTs of type 0", async function () {
     const nftIDs = [];
-    for (let i = 0; i < 299; i++) {
+    for (let i = 0; i < 300; i++) {
       let tx = await nftContract.publicMint([0], {
         value: type0Price,
       });
@@ -309,7 +309,61 @@ describe("nftContract", function () {
       nftIDs.push(tokenId);
     }
     const set = new Set(nftIDs);
-    console("different NFTs count : ", set.size);
-    expect(set.size).to.equal(299);
+    console.log("different NFTs type0 count : ", set.size);
+    expect(set.size).to.equal(300);
+  });
+  it("Should mint different 300 NFTs of type 1", async function () {
+    const nftIDs = [];
+    for (let i = 0; i < 300; i++) {
+      let tx = await nftContract.publicMint([1], {
+        value: type0Price,
+      });
+      await tx.wait();
+
+      // Get the transaction receipt
+      let receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+
+      // Retrieve the minted token IDs from the event logs
+      let eventTopic = ethers.utils.id("NFTsMinted(address,uint256[])");
+      let eventLog = receipt.logs.find((log) =>
+        log.topics.includes(eventTopic)
+      );
+      let eventData = nftContract.interface.parseLog(eventLog);
+
+      let mintedTokenIDs = eventData.args[1]; // Array of minted token IDs
+
+      let tokenId = mintedTokenIDs[0];
+      nftIDs.push(tokenId);
+    }
+    const set = new Set(nftIDs);
+    console.log("different NFTs type1 count : ", set.size);
+    expect(set.size).to.equal(300);
+  });
+  it("Should mint different 400 NFTs of type 2", async function () {
+    const nftIDs = [];
+    for (let i = 0; i < 400; i++) {
+      let tx = await nftContract.publicMint([2], {
+        value: type0Price,
+      });
+      await tx.wait();
+
+      // Get the transaction receipt
+      let receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+
+      // Retrieve the minted token IDs from the event logs
+      let eventTopic = ethers.utils.id("NFTsMinted(address,uint256[])");
+      let eventLog = receipt.logs.find((log) =>
+        log.topics.includes(eventTopic)
+      );
+      let eventData = nftContract.interface.parseLog(eventLog);
+
+      let mintedTokenIDs = eventData.args[1]; // Array of minted token IDs
+
+      let tokenId = mintedTokenIDs[0];
+      nftIDs.push(tokenId);
+    }
+    const set = new Set(nftIDs);
+    console.log("different NFTs type2 count : ", set.size);
+    expect(set.size).to.equal(400);
   });
 });

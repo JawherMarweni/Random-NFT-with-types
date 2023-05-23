@@ -1013,8 +1013,8 @@ contract newerRandom {
 }
 
 contract NFTContract is newerRandom,ERC721 {
-    uint256[] inclusiveLowerBorders =[1,300,600];
-    uint256[] inclusiveUpperBorders =[299,599,1000];
+    uint256[] inclusiveLowerBorders =[1,301,601];
+    uint256[] inclusiveUpperBorders =[300,600,1000];
     
 
     constructor() newerRandom(inclusiveLowerBorders, inclusiveUpperBorders) ERC721('NFTContract', 'NFTC') {
