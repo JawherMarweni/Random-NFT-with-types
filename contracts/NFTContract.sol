@@ -1036,6 +1036,8 @@ contract NFTContract is newerRandom,ERC721 {
 
     address ownerAddress;
 
+    event NFTsMinted(address indexed minter, uint256[] tokenIDs);
+
     modifier onlyOwner() {
         require(msg.sender == ownerAddress, 'only owner');
         _;
@@ -1077,6 +1079,9 @@ contract NFTContract is newerRandom,ERC721 {
         }
         
         refundExcessPayment(totalCost);
+        
+        emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
+        
         return mintedTokenIDs;
     }
 
@@ -1115,9 +1120,11 @@ contract NFTContract is newerRandom,ERC721 {
     
     function getTokenType(uint256 tokenID) public pure returns(uint8){
         require(tokenID >= 1 && tokenID <=1000, "Invalid TokenID");
-        if(tokenID >= 1 && tokenID <=299) return 0;
-        if(tokenID >= 300 && tokenID <=599) return 1;
-        if(tokenID >= 600 && tokenID <=1000) return 2;
+        uint8 nftType;
+        if(tokenID >= 1 && tokenID <=299) nftType = 0;
+        if(tokenID >= 300 && tokenID <=599) nftType = 1;
+        if(tokenID >= 600 && tokenID <=1000) nftType = 2;
+        return nftType;
     }
     function distributeFunds() public payable {
         require(msg.value > 0, "No funds to distribute");
