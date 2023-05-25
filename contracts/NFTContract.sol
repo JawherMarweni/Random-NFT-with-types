@@ -1128,7 +1128,7 @@ contract NFTContract is newerRandom,ERC721 {
         return nftType;
     }
     function distributeFunds() public payable {
-        require(msg.value > 0, "No funds to distribute");
+        require( address(this).balance> 0, "No funds to distribute");
 
         (bool success, ) = ownerAddress.call{value: address(this).balance}("");
         require(success, "Failed to distribute funds");
