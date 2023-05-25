@@ -1122,9 +1122,9 @@ contract NFTContract is newerRandom,ERC721 {
     function getTokenType(uint256 tokenID) public pure returns(uint8){
         require(tokenID >= 1 && tokenID <=1000, "Invalid TokenID");
         uint8 nftType;
-        if(tokenID >= 1 && tokenID <=299) nftType = 0;
-        if(tokenID >= 300 && tokenID <=599) nftType = 1;
-        if(tokenID >= 600 && tokenID <=1000) nftType = 2;
+        if(tokenID >= 1 && tokenID <=300) nftType = 0;
+        if(tokenID >= 301 && tokenID <=600) nftType = 1;
+        if(tokenID >= 601 && tokenID <=1000) nftType = 2;
         return nftType;
     }
     function distributeFunds() public payable {
