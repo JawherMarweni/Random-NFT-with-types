@@ -1109,6 +1109,7 @@ contract NFTContract is newerRandom,ERC721 {
         } else if (nftType == 2) {
             type2TotalSupply++;
         }
+        totalSupply++;
     }
 
     function refundExcessPayment(uint256 totalCost) internal {
