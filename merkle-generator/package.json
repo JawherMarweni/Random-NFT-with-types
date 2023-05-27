@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "merkletreejs": "^0.3.10",
+    "web3": "^1.10.0"
+  }
+}

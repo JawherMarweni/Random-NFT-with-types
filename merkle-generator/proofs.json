@@ -1,0 +1,30 @@
+[
+  {
+    "address": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "proof": [
+      "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
+      "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb"
+    ]
+  },
+  {
+    "address": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "proof": [
+      "0x8bee09070fc75470e4c3f47c5c09f954cbe01ce3fa13ebcf2e14d19cd72a15eb",
+      "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb"
+    ]
+  },
+  {
+    "address": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "proof": [
+      "0x4b7923bd7ed3fcd6d062e2e365c3157c49c95512dd440b77cde547c4f409f134",
+      "0x5125ebbbad39b171d84979e258ec3cff53ddbbf48faa1fd9a729be4d047f92c5"
+    ]
+  },
+  {
+    "address": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+    "proof": [
+      "0x9952f06724cd9036a14aa9ea32bf9b80960ad2eb252ab63b8e4a23e8141f2b52",
+      "0x5125ebbbad39b171d84979e258ec3cff53ddbbf48faa1fd9a729be4d047f92c5"
+    ]
+  }
+]
