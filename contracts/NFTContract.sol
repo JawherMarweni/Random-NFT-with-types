@@ -973,6 +973,8 @@ contract newerRandom {
         internal
         returns (uint256 _randomNumber)
     {
+        require(intervalIndex >= 0 && intervalIndex <= 2, "Invalid interval");
+        
         Interval storage interval = intervals[intervalIndex];
         require(
             interval.nextIndex <= interval.inclusiveUpperBorder,
@@ -1011,18 +1013,19 @@ contract newerRandom {
         }
     }
 }
-
+import "hardhat/console.sol";
 contract NFTContract is newerRandom,ERC721 {
     uint256[] inclusiveLowerBorders =[1,301,601];
     uint256[] inclusiveUpperBorders =[300,600,1000];
-    
+    address ownerAddress ;
 
     constructor() newerRandom(inclusiveLowerBorders, inclusiveUpperBorders) ERC721('NFTContract', 'NFTC') {
+    ownerAddress = msg.sender;
     }
 
-    uint256 public type0Price = 69000000000000000;
-    uint256 public type1Price = 69000000000000000;
-    uint256 public type2Price = 69000000000000000;
+    uint256 public type0Price = 1000000000000000;
+    uint256 public type1Price = 2000000000000000;
+    uint256 public type2Price = 3000000000000000;
     
 
     
@@ -1034,7 +1037,11 @@ contract NFTContract is newerRandom,ERC721 {
     
     bool _paused = false;
 
-    address ownerAddress;
+    
+
+    mapping(address => bool) private usedDiscounts;
+
+    bytes32 private merkleRoot;
 
     event NFTsMinted(address indexed minter, uint256[] tokenIDs);
 
@@ -1060,36 +1067,93 @@ contract NFTContract is newerRandom,ERC721 {
     function setOwnerAddress(address _ownerAddress) public onlyOwner {
         ownerAddress = _ownerAddress;
     }
+
+    function setRoot(bytes32 _root) public onlyOwner{
+        merkleRoot = _root;
+    }
+    function verifyProof(bytes32[] memory proof,bytes32 root,bytes32 leaf ) internal pure returns (bool) {
+        
+        bytes32 computedHash = leaf;
+
+        for (uint256 i = 0; i < proof.length; i++) {
+        bytes32 proofElement = proof[i];
+
+        if (computedHash <= proofElement) {
+            computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
+        } else {
+            computedHash = keccak256(abi.encodePacked(proofElement, computedHash));
+        }
+        }
+        return computedHash == root;
+    }
     
-    function publicMint(uint256[] calldata types) external payable returns (uint256[] memory){
+    function publicMint(uint256[] calldata types,bytes32[] calldata proof,uint256 discount) external payable returns (uint256[] memory){
         require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
         require(!_paused, "Minting is paused");
+        if(proof.length == 0){
+            uint256 totalCost = calculateTotalCost(types);
+            require(msg.value >= totalCost, "Insufficient funds sent");
 
-        uint256 totalCost = calculateTotalCost(types);
-        require(msg.value >= totalCost, "Insufficient funds sent");
+            uint256[] memory mintedTokenIDs = new uint256[](types.length);
 
-        uint256[] memory mintedTokenIDs = new uint256[](types.length);
+            for (uint256 i = 0; i < types.length; i++) {
+                uint256 nftType = types[i];
+                uint256 tokenID = getNextRandom(nftType);
+                _safeMint(msg.sender, tokenID);
+                mintedTokenIDs[i] = tokenID;
+                updateTotalSupply(nftType);
+            }
+            
+            refundExcessPayment(totalCost);
+            
+            emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
+            
+            return mintedTokenIDs;
+        }else{
+            require(types.length == 1,'Exceeded maximum number of NFTs with discount');
+            require(!usedDiscounts[msg.sender], "You have already minted an NFT.");
+            require(verifyProof(proof,merkleRoot, keccak256(abi.encodePacked(msg.sender, types[0], discount))), "Invalid proof.");
+            usedDiscounts[msg.sender] = true;
 
-        for (uint256 i = 0; i < types.length; i++) {
-            uint256 nftType = types[i];
-            uint256 tokenID = getNextRandom(nftType);
-            _safeMint(msg.sender, tokenID);
-            mintedTokenIDs[i] = tokenID;
-            updateTotalSupply(nftType);
+            uint256[] memory tokenID = _mintWithDiscount(types[0],discount);
+            emit NFTsMinted(msg.sender, tokenID);
+            return tokenID;
+
         }
+
+    }
+    function _mintWithDiscount(uint256 nftType, uint256 discount) internal returns (uint256[] memory) {
+        require(nftType >= 0 && nftType <= 2, "Invalid NFT type");
+        require(!_paused, "Minting is paused");
+
+        uint256 cost;
+        if (nftType == 0) {
+            cost = (type0Price * (100 - discount)) / 100;
+        } else if (nftType == 1) {
+            cost = (type1Price * (100 - discount)) / 100;
+        } else if (nftType == 2) {
+            cost = (type2Price * (100 - discount)) / 100;
+        }
+
+        require(msg.value >= cost, "Insufficient funds sent");
+
+        uint256[] memory tokenID = new uint256[](1);
+        tokenID[0] = getNextRandom(nftType);
         
-        refundExcessPayment(totalCost);
-        
-        emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
-        
-        return mintedTokenIDs;
+        _safeMint(msg.sender, tokenID[0]);
+
+        updateTotalSupply(nftType);
+
+        refundExcessPayment(cost);
+
+        return tokenID;
     }
 
     function calculateTotalCost(uint256[] calldata types) internal view returns (uint256) {
         uint256 totalCost;
         for (uint256 i = 0; i < types.length; i++) {
             uint256 nftType = types[i];
-            require(nftType >= 0 && nftType < 3, "Invalid NFT type");
+            require(nftType >= 0 && nftType <= 2, "Invalid NFT type");
             if (nftType == 0) {
                 totalCost += type0Price;
             } else if (nftType == 1) {
@@ -1102,6 +1166,7 @@ contract NFTContract is newerRandom,ERC721 {
     }
 
     function updateTotalSupply(uint256 nftType) internal {
+        require(nftType >= 0 && nftType <= 2, "Invalid NFT type");
         if (nftType == 0) {
             type0TotalSupply++;
         } else if (nftType == 1) {
@@ -1119,12 +1184,12 @@ contract NFTContract is newerRandom,ERC721 {
         }
     }
     
-    function getTokenType(uint256 tokenID) public pure returns(uint8){
+    function getTokenType(uint256 tokenID) public view returns(uint8){
         require(tokenID >= 1 && tokenID <=1000, "Invalid TokenID");
         uint8 nftType;
-        if(tokenID >= 1 && tokenID <=300) nftType = 0;
-        if(tokenID >= 301 && tokenID <=600) nftType = 1;
-        if(tokenID >= 601 && tokenID <=1000) nftType = 2;
+        if(tokenID >= inclusiveLowerBorders[0] && tokenID <=inclusiveUpperBorders[0]) nftType = 0;
+        if(tokenID >= inclusiveLowerBorders[1] && tokenID <=inclusiveUpperBorders[1]) nftType = 1;
+        if(tokenID >= inclusiveLowerBorders[2] && tokenID <=inclusiveUpperBorders[2]) nftType = 2;
         return nftType;
     }
     function distributeFunds() public payable {
