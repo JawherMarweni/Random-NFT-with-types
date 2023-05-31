@@ -592,4 +592,12 @@ describe("nftContract(minting with discount)", function () {
       nftContract.connect(owner).publicMint([0], proof, 10, { value: cost })
     ).to.be.revertedWith("You have already minted an NFT.");
   });
+  it("should revert if trying to change merkelRoot twice", async function () {
+    const root =
+      "0x765e5fef76cd3cba3c03385c360ddf974060e0a9d4927dcb81d78cd3835674fb";
+
+    await expect(nftContract.connect(owner).setRoot(root)).to.be.revertedWith(
+      "Merkle root already set"
+    );
+  });
 });
