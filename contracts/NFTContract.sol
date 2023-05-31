@@ -1036,7 +1036,6 @@ contract NFTContract is newerRandom,ERC721 {
     uint256 public totalSupply;
     
     bool _paused = false;
-
     
 
     mapping(address => bool) private usedDiscounts;
@@ -1049,7 +1048,7 @@ contract NFTContract is newerRandom,ERC721 {
         require(msg.sender == ownerAddress, 'only owner');
         _;
     }
-
+    
     function isPaused() public view returns (bool) {
         return _paused;
     }
@@ -1068,9 +1067,11 @@ contract NFTContract is newerRandom,ERC721 {
         ownerAddress = _ownerAddress;
     }
 
-    function setRoot(bytes32 _root) public onlyOwner{
+    function setRoot(bytes32 _root) public onlyOwner {
+        require(merkleRoot == bytes32(0), "Merkle root already set");
         merkleRoot = _root;
     }
+
     function verifyProof(bytes32[] memory proof,bytes32 root,bytes32 leaf ) internal pure returns (bool) {
         
         bytes32 computedHash = leaf;
