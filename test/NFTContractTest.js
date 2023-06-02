@@ -391,13 +391,13 @@ describe("nftContract(minting with discount)", function () {
   });
 
   it("should mint an NFT of type 0 with a 10% discount for address1", async function () {
-    const cost = type0Price.mul(90).div(100);
+    const cost = type0Price.mul(90).div(100).add(type2Price);
     const proof = [
       "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
       "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
     ];
 
-    const tx = await nftContract.publicMint([0], proof, {
+    const tx = await nftContract.publicMint([0, 2], proof, {
       value: cost,
     });
     await tx.wait();

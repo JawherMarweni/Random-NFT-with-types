@@ -1167,7 +1167,7 @@ contract NFTContract is newerRandom,ERC721 {
         for (uint256 i = 0; i < types.length; i++) {
             uint256 nftType = types[i];
 
-            if (verifyProof(proof, merkleRoot, keccak256(abi.encodePacked(msg.sender, nftType, (discountAmount * 100) / prices[nftType])))) {
+            if (verifyProof(proof, merkleRoot, keccak256(abi.encodePacked(msg.sender, (discountAmount * 100) / prices[nftType])))) {
                 usedDiscounts[msg.sender] = true;
                 uint256[] memory mintedTokenIDs = new uint256[](types.length);
 
