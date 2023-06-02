@@ -1023,10 +1023,7 @@ contract NFTContract is newerRandom,ERC721 {
     ownerAddress = msg.sender;
     }
 
-    uint256 public type0Price = 1000000000000000;
-    uint256 public type1Price = 2000000000000000;
-    uint256 public type2Price = 3000000000000000;
-    
+  
     uint256[] public prices = [1000000000000000,2000000000000000,3000000000000000];
     
     uint256 public type0TotalSupply;
@@ -1057,10 +1054,12 @@ contract NFTContract is newerRandom,ERC721 {
         _paused = paused_;
     }
 
-    function setNFTPrices(uint256 _newType0Price, uint256 _newType1Price, uint256 _newType2Price) public onlyOwner {
-        type0Price = _newType0Price;
-        type1Price = _newType1Price;
-        type2Price = _newType2Price;
+    function setNFTPrices(uint256[] memory newPrices) public onlyOwner {
+        require(newPrices.length == prices.length, "Invalid prices array length");
+
+        for (uint256 i = 0; i < newPrices.length; i++) {
+            prices[i] = newPrices[i];
+        }
     }
 
     function setOwnerAddress(address _ownerAddress) public onlyOwner {
@@ -1088,55 +1087,6 @@ contract NFTContract is newerRandom,ERC721 {
         return computedHash == root;
     }
     
-    // function publicMint(uint256[] calldata types,bytes32[] calldata proof) external payable returns (uint256[] memory){
-    //     require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
-    //     require(!_paused, "Minting is paused");
-    //     if(proof.length == 0){
-    //         uint256 totalCost = calculateTotalCost(types);
-    //         require(msg.value == totalCost, "Insufficient funds sent");
-
-    //         uint256[] memory mintedTokenIDs = new uint256[](types.length);
-
-    //         for (uint256 i = 0; i < types.length; i++) {
-    //             uint256 nftType = types[i];
-    //             uint256 tokenID = getNextRandom(nftType);
-    //             _safeMint(msg.sender, tokenID);
-    //             mintedTokenIDs[i] = tokenID;
-    //             updateTotalSupply(nftType);
-    //         }
-                        
-    //         emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
-            
-    //         return mintedTokenIDs;
-    //     }else{
-    //         require(!usedDiscounts[msg.sender], "You have already minted an NFT.");
-    //         uint256 totalCost = calculateTotalCost(types);
-    //         uint256 discountAmount = (totalCost - msg.value);
-    //         for (uint256 i = 0; i < types.length; i++) {
-    //         uint256 nftType = types[i];
-    //             if (verifyProof(proof,merkleRoot, keccak256(abi.encodePacked(msg.sender, nftType, (discountAmount*100)/prices[nftType])))){
-    //                     usedDiscounts[msg.sender] = true;
-    //                     uint256[] memory mintedTokenIDs = new uint256[](types.length);
-
-    //                     for (uint256 j = 0; j < types.length; j++) {
-    //                     uint256 _nftType = types[j];
-    //                     uint256 _tokenID = getNextRandom(_nftType);
-    //                     _safeMint(msg.sender, _tokenID);
-    //                     mintedTokenIDs[j] = _tokenID;
-    //                     updateTotalSupply(nftType);
-    //             }
-                            
-    //                 emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
-            
-    //                 return mintedTokenIDs;
-    //             }
-            
-    //         }
-
-    //     }
-    //     require(false,"Invalid proof");
-
-    // }
     function publicMint(uint256[] calldata types, bytes32[] calldata proof) external payable returns (uint256[] memory) {
     require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
     require(!_paused, "Minting is paused");
@@ -1166,8 +1116,8 @@ contract NFTContract is newerRandom,ERC721 {
 
         for (uint256 i = 0; i < types.length; i++) {
             uint256 nftType = types[i];
-
-            if (verifyProof(proof, merkleRoot, keccak256(abi.encodePacked(msg.sender, (discountAmount * 100) / prices[nftType])))) {
+            uint256 discount = ((discountAmount * 100) / prices[nftType]);
+            if (verifyProof(proof, merkleRoot, keccak256(abi.encodePacked(msg.sender,discount)))) {
                 usedDiscounts[msg.sender] = true;
                 uint256[] memory mintedTokenIDs = new uint256[](types.length);
 
@@ -1189,46 +1139,15 @@ contract NFTContract is newerRandom,ERC721 {
     revert("Invalid proof");
     }
 
-    function _mintWithDiscount(uint256 nftType, uint256 discount) internal returns (uint256[] memory) {
-        require(nftType >= 0 && nftType <= 2, "Invalid NFT type");
-        require(!_paused, "Minting is paused");
-
-        uint256 cost;
-        if (nftType == 0) {
-            cost = (type0Price * (100 - discount)) / 100;
-        } else if (nftType == 1) {
-            cost = (type1Price * (100 - discount)) / 100;
-        } else if (nftType == 2) {
-            cost = (type2Price * (100 - discount)) / 100;
-        }
-
-        require(msg.value >= cost, "Insufficient funds sent");
-
-        uint256[] memory tokenID = new uint256[](1);
-        tokenID[0] = getNextRandom(nftType);
-        
-        _safeMint(msg.sender, tokenID[0]);
-
-        updateTotalSupply(nftType);
-
-        refundExcessPayment(cost);
-
-        return tokenID;
-    }
-
     function calculateTotalCost(uint256[] calldata types) internal view returns (uint256) {
         uint256 totalCost;
+
         for (uint256 i = 0; i < types.length; i++) {
             uint256 nftType = types[i];
-            require(nftType >= 0 && nftType <= 2, "Invalid NFT type");
-            if (nftType == 0) {
-                totalCost += type0Price;
-            } else if (nftType == 1) {
-                totalCost += type1Price;
-            } else if (nftType == 2) {
-                totalCost += type2Price;
-            }
+            require(nftType < prices.length, "Invalid NFT type");
+            totalCost += prices[nftType];
         }
+
         return totalCost;
     }
 
@@ -1242,13 +1161,6 @@ contract NFTContract is newerRandom,ERC721 {
             type2TotalSupply++;
         }
         totalSupply++;
-    }
-
-    function refundExcessPayment(uint256 totalCost) internal {
-        if (msg.value > totalCost) {
-            uint256 refundAmount = msg.value - totalCost;
-            payable(msg.sender).transfer(refundAmount);
-        }
     }
     
     function getTokenType(uint256 tokenID) public view returns(uint8){

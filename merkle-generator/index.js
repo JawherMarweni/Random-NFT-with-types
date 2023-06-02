@@ -7,11 +7,10 @@ function createMerkleTree(leaves) {
   return new MerkleTree(leavesBuffer, keccak256, { sortPairs: true });
 }
 
-function createLeaf(receiver, nftType, discount) {
+function createLeaf(receiver, discount) {
   const web3 = require("web3");
   return web3.utils.soliditySha3(
     { type: "address", value: receiver },
-    { type: "uint256", value: nftType },
     { type: "uint256", value: discount }
   );
 }
@@ -21,10 +20,10 @@ function getLeaves(fileDirectory) {
   try {
     const discounts = JSON.parse(data);
     return discounts.map((discount) => {
-      const { receiver, nftType, discount: disc } = discount;
+      const { receiver, discount: disc } = discount;
       return {
         receiver,
-        leaf: createLeaf(receiver, nftType, disc),
+        leaf: createLeaf(receiver, disc),
       };
     });
   } catch (error) {
@@ -57,3 +56,5 @@ const tree = createMerkleTree(leaves.map(({ leaf }) => leaf));
 const root = "0x" + tree.getRoot().toString("hex");
 console.log(root);
 createProofFile(tree, leaves);
+
+// 0x569ab48c70cc15322c9253243aab005d1c64df7c33031cf8dfb5a8ac071d368d
