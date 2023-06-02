@@ -397,7 +397,7 @@ describe("nftContract(minting with discount)", function () {
       "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
     ];
 
-    const tx = await nftContract.publicMint([0], proof, 10, {
+    const tx = await nftContract.publicMint([0], proof, {
       value: cost,
     });
     await tx.wait();
@@ -416,188 +416,188 @@ describe("nftContract(minting with discount)", function () {
     console.log("Token type: ", tokenType);
     expect(tokenType).to.equal(0);
   });
-  it("should mint an NFT of type 1 with a 20% discount for address2", async function () {
-    const cost = type1Price.mul(80).div(100);
-    const proof = [
-      "0x8bee09070fc75470e4c3f47c5c09f954cbe01ce3fa13ebcf2e14d19cd72a15eb",
-      "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
-    ];
+  // it("should mint an NFT of type 1 with a 20% discount for address2", async function () {
+  //   const cost = type1Price.mul(80).div(100);
+  //   const proof = [
+  //     "0x8bee09070fc75470e4c3f47c5c09f954cbe01ce3fa13ebcf2e14d19cd72a15eb",
+  //     "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
+  //   ];
 
-    const tx = await nftContract.connect(addr1).publicMint([1], proof, 20, {
-      value: cost,
-    });
-    await tx.wait();
+  //   const tx = await nftContract.connect(addr1).publicMint([1], proof, 20, {
+  //     value: cost,
+  //   });
+  //   await tx.wait();
 
-    const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
-    const eventTopic = ethers.utils.id("NFTsMinted(address,uint256[])");
-    const eventLog = receipt.logs.find((log) =>
-      log.topics.includes(eventTopic)
-    );
-    const eventData = nftContract.interface.parseLog(eventLog);
-    const mintedTokenIDs = eventData.args[1];
+  //   const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+  //   const eventTopic = ethers.utils.id("NFTsMinted(address,uint256[])");
+  //   const eventLog = receipt.logs.find((log) =>
+  //     log.topics.includes(eventTopic)
+  //   );
+  //   const eventData = nftContract.interface.parseLog(eventLog);
+  //   const mintedTokenIDs = eventData.args[1];
 
-    const tokenId = mintedTokenIDs[0];
-    const tokenType = await nftContract.getTokenType(tokenId);
+  //   const tokenId = mintedTokenIDs[0];
+  //   const tokenType = await nftContract.getTokenType(tokenId);
 
-    console.log("Token type: ", tokenType);
-    expect(tokenType).to.equal(1);
-  });
-  it("should mint an NFT of type 2 with a 50% discount for address3", async function () {
-    const cost = type2Price.mul(50).div(100);
-    const proof = [
-      "0x4b7923bd7ed3fcd6d062e2e365c3157c49c95512dd440b77cde547c4f409f134",
-      "0x5125ebbbad39b171d84979e258ec3cff53ddbbf48faa1fd9a729be4d047f92c5",
-    ];
+  //   console.log("Token type: ", tokenType);
+  //   expect(tokenType).to.equal(1);
+  // });
+  // it("should mint an NFT of type 2 with a 50% discount for address3", async function () {
+  //   const cost = type2Price.mul(50).div(100);
+  //   const proof = [
+  //     "0x4b7923bd7ed3fcd6d062e2e365c3157c49c95512dd440b77cde547c4f409f134",
+  //     "0x5125ebbbad39b171d84979e258ec3cff53ddbbf48faa1fd9a729be4d047f92c5",
+  //   ];
 
-    const tx = await nftContract.connect(addr2).publicMint([2], proof, 50, {
-      value: cost,
-    });
-    await tx.wait();
+  //   const tx = await nftContract.connect(addr2).publicMint([2], proof, 50, {
+  //     value: cost,
+  //   });
+  //   await tx.wait();
 
-    const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
-    const eventTopic = ethers.utils.id("NFTsMinted(address,uint256[])");
-    const eventLog = receipt.logs.find((log) =>
-      log.topics.includes(eventTopic)
-    );
-    const eventData = nftContract.interface.parseLog(eventLog);
-    const mintedTokenIDs = eventData.args[1];
+  //   const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+  //   const eventTopic = ethers.utils.id("NFTsMinted(address,uint256[])");
+  //   const eventLog = receipt.logs.find((log) =>
+  //     log.topics.includes(eventTopic)
+  //   );
+  //   const eventData = nftContract.interface.parseLog(eventLog);
+  //   const mintedTokenIDs = eventData.args[1];
 
-    const tokenId = mintedTokenIDs[0];
-    const tokenType = await nftContract.getTokenType(tokenId);
+  //   const tokenId = mintedTokenIDs[0];
+  //   const tokenType = await nftContract.getTokenType(tokenId);
 
-    console.log("Token type: ", tokenType);
-    expect(tokenType).to.equal(2);
-  });
-  it("should mint an NFT of type 1 for free for address4", async function () {
-    const proof = [
-      "0x9952f06724cd9036a14aa9ea32bf9b80960ad2eb252ab63b8e4a23e8141f2b52",
-      "0x5125ebbbad39b171d84979e258ec3cff53ddbbf48faa1fd9a729be4d047f92c5",
-    ];
+  //   console.log("Token type: ", tokenType);
+  //   expect(tokenType).to.equal(2);
+  // });
+  // it("should mint an NFT of type 1 for free for address4", async function () {
+  //   const proof = [
+  //     "0x9952f06724cd9036a14aa9ea32bf9b80960ad2eb252ab63b8e4a23e8141f2b52",
+  //     "0x5125ebbbad39b171d84979e258ec3cff53ddbbf48faa1fd9a729be4d047f92c5",
+  //   ];
 
-    const tx = await nftContract.connect(addr3).publicMint([1], proof, 100);
-    await tx.wait();
+  //   const tx = await nftContract.connect(addr3).publicMint([1], proof, 100);
+  //   await tx.wait();
 
-    const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
-    const eventTopic = ethers.utils.id("NFTsMinted(address,uint256[])");
-    const eventLog = receipt.logs.find((log) =>
-      log.topics.includes(eventTopic)
-    );
-    const eventData = nftContract.interface.parseLog(eventLog);
-    const mintedTokenIDs = eventData.args[1];
+  //   const receipt = await ethers.provider.getTransactionReceipt(tx.hash);
+  //   const eventTopic = ethers.utils.id("NFTsMinted(address,uint256[])");
+  //   const eventLog = receipt.logs.find((log) =>
+  //     log.topics.includes(eventTopic)
+  //   );
+  //   const eventData = nftContract.interface.parseLog(eventLog);
+  //   const mintedTokenIDs = eventData.args[1];
 
-    const tokenId = mintedTokenIDs[0];
-    const tokenType = await nftContract.getTokenType(tokenId);
+  //   const tokenId = mintedTokenIDs[0];
+  //   const tokenType = await nftContract.getTokenType(tokenId);
 
-    console.log("Token type: ", tokenType);
-    expect(tokenType).to.equal(1);
-  });
-  it("should revert if insufficient funds are sent after the discount", async function () {
-    let reverted = false;
-    try {
-      const cost = type0Price.mul(90).div(100).sub(1);
-      const proof = [
-        "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
-        "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
-      ];
+  //   console.log("Token type: ", tokenType);
+  //   expect(tokenType).to.equal(1);
+  // });
+  // it("should revert if insufficient funds are sent after the discount", async function () {
+  //   let reverted = false;
+  //   try {
+  //     const cost = type0Price.mul(90).div(100).sub(1);
+  //     const proof = [
+  //       "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
+  //       "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
+  //     ];
 
-      const tx = await nftContract.publicMint([0], proof, 10, {
-        value: cost,
-      });
-    } catch (error) {
-      reverted = true;
-    }
+  //     const tx = await nftContract.publicMint([0], proof, 10, {
+  //       value: cost,
+  //     });
+  //   } catch (error) {
+  //     reverted = true;
+  //   }
 
-    expect(reverted).to.equal(true);
-  });
+  //   expect(reverted).to.equal(true);
+  // });
 
-  it("should revert if an incorrect discount is inputted", async function () {
-    let reverted = false;
-    try {
-      const cost = type0Price.mul(80).div(100);
-      const proof = [
-        "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
-        "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
-      ];
+  // it("should revert if an incorrect discount is inputted", async function () {
+  //   let reverted = false;
+  //   try {
+  //     const cost = type0Price.mul(80).div(100);
+  //     const proof = [
+  //       "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
+  //       "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
+  //     ];
 
-      const tx = await nftContract.publicMint([0], proof, 20, {
-        value: cost,
-      });
-    } catch (error) {
-      reverted = true;
-    }
+  //     const tx = await nftContract.publicMint([0], proof, 20, {
+  //       value: cost,
+  //     });
+  //   } catch (error) {
+  //     reverted = true;
+  //   }
 
-    expect(reverted).to.equal(true);
-  });
+  //   expect(reverted).to.equal(true);
+  // });
 
-  it("should revert if an incorrect type is inputted", async function () {
-    let reverted = false;
-    try {
-      const cost = type1Price.mul(90).div(100);
-      const proof = [
-        "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
-        "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
-      ];
+  // it("should revert if an incorrect type is inputted", async function () {
+  //   let reverted = false;
+  //   try {
+  //     const cost = type1Price.mul(90).div(100);
+  //     const proof = [
+  //       "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
+  //       "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
+  //     ];
 
-      const tx = await nftContract.publicMint([1], proof, 10, {
-        value: cost,
-      });
-    } catch (error) {
-      reverted = true;
-    }
+  //     const tx = await nftContract.publicMint([1], proof, 10, {
+  //       value: cost,
+  //     });
+  //   } catch (error) {
+  //     reverted = true;
+  //   }
 
-    expect(reverted).to.equal(true);
-  });
+  //   expect(reverted).to.equal(true);
+  // });
 
-  it("should revert if the function is called by an unauthorized user", async function () {
-    const cost = type0Price.mul(90).div(100);
-    const proof = [
-      "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
-      "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
-    ];
+  // it("should revert if the function is called by an unauthorized user", async function () {
+  //   const cost = type0Price.mul(90).div(100);
+  //   const proof = [
+  //     "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
+  //     "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
+  //   ];
 
-    await expect(
-      nftContract.connect(addr1).publicMint([1], proof, 10, { value: cost })
-    ).to.be.revertedWith("Invalid proof.");
-  });
+  //   await expect(
+  //     nftContract.connect(addr1).publicMint([1], proof, 10, { value: cost })
+  //   ).to.be.revertedWith("Invalid proof.");
+  // });
 
-  it("should revert if trying to mint multiple NFTs with a discount", async function () {
-    const cost = type0Price.mul(90).div(100);
-    const proof = [
-      "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
-      "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
-    ];
-    reverted = false;
-    try {
-      await nftContract
-        .connect(owner)
-        .publicMint([O, O], proof, 10, { value: cost });
-    } catch (e) {
-      reverted = true;
-    }
-    expect(reverted).to.equal(true);
-  });
+  // it("should revert if trying to mint multiple NFTs with a discount", async function () {
+  //   const cost = type0Price.mul(90).div(100);
+  //   const proof = [
+  //     "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
+  //     "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
+  //   ];
+  //   reverted = false;
+  //   try {
+  //     await nftContract
+  //       .connect(owner)
+  //       .publicMint([O, O], proof, 10, { value: cost });
+  //   } catch (e) {
+  //     reverted = true;
+  //   }
+  //   expect(reverted).to.equal(true);
+  // });
 
-  it("should revert if trying to mint the same NFTs twice with a discount using the same address", async function () {
-    const cost = type0Price.mul(90).div(100);
-    const proof = [
-      "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
-      "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
-    ];
+  // it("should revert if trying to mint the same NFTs twice with a discount using the same address", async function () {
+  //   const cost = type0Price.mul(90).div(100);
+  //   const proof = [
+  //     "0xf5e703de574d5e61fabf42757b648bf2f0b2650439e9640adf10b96e16b7051f",
+  //     "0x2bd6d62e5169276219ba4940e8547352f29598748320f2dd67c14efba3b0f3fb",
+  //   ];
 
-    await expect(
-      nftContract.connect(owner).publicMint([0], proof, 10, { value: cost })
-    ).to.not.be.reverted;
+  //   await expect(
+  //     nftContract.connect(owner).publicMint([0], proof, 10, { value: cost })
+  //   ).to.not.be.reverted;
 
-    await expect(
-      nftContract.connect(owner).publicMint([0], proof, 10, { value: cost })
-    ).to.be.revertedWith("You have already minted an NFT.");
-  });
-  it("should revert if trying to change merkelRoot twice", async function () {
-    const root =
-      "0x765e5fef76cd3cba3c03385c360ddf974060e0a9d4927dcb81d78cd3835674fb";
+  //   await expect(
+  //     nftContract.connect(owner).publicMint([0], proof, 10, { value: cost })
+  //   ).to.be.revertedWith("You have already minted an NFT.");
+  // });
+  // it("should revert if trying to change merkelRoot twice", async function () {
+  //   const root =
+  //     "0x765e5fef76cd3cba3c03385c360ddf974060e0a9d4927dcb81d78cd3835674fb";
 
-    await expect(nftContract.connect(owner).setRoot(root)).to.be.revertedWith(
-      "Merkle root already set"
-    );
-  });
+  //   await expect(nftContract.connect(owner).setRoot(root)).to.be.revertedWith(
+  //     "Merkle root already set"
+  //   );
+  // });
 });

@@ -1027,7 +1027,7 @@ contract NFTContract is newerRandom,ERC721 {
     uint256 public type1Price = 2000000000000000;
     uint256 public type2Price = 3000000000000000;
     
-
+    uint256[] public prices = [1000000000000000,2000000000000000,3000000000000000];
     
     uint256 public type0TotalSupply;
     uint256 public type1TotalSupply;
@@ -1088,41 +1088,107 @@ contract NFTContract is newerRandom,ERC721 {
         return computedHash == root;
     }
     
-    function publicMint(uint256[] calldata types,bytes32[] calldata proof,uint256 discount) external payable returns (uint256[] memory){
-        require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
-        require(!_paused, "Minting is paused");
-        if(proof.length == 0){
-            uint256 totalCost = calculateTotalCost(types);
-            require(msg.value >= totalCost, "Insufficient funds sent");
+    // function publicMint(uint256[] calldata types,bytes32[] calldata proof) external payable returns (uint256[] memory){
+    //     require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
+    //     require(!_paused, "Minting is paused");
+    //     if(proof.length == 0){
+    //         uint256 totalCost = calculateTotalCost(types);
+    //         require(msg.value == totalCost, "Insufficient funds sent");
 
-            uint256[] memory mintedTokenIDs = new uint256[](types.length);
+    //         uint256[] memory mintedTokenIDs = new uint256[](types.length);
 
-            for (uint256 i = 0; i < types.length; i++) {
-                uint256 nftType = types[i];
-                uint256 tokenID = getNextRandom(nftType);
-                _safeMint(msg.sender, tokenID);
-                mintedTokenIDs[i] = tokenID;
-                updateTotalSupply(nftType);
-            }
+    //         for (uint256 i = 0; i < types.length; i++) {
+    //             uint256 nftType = types[i];
+    //             uint256 tokenID = getNextRandom(nftType);
+    //             _safeMint(msg.sender, tokenID);
+    //             mintedTokenIDs[i] = tokenID;
+    //             updateTotalSupply(nftType);
+    //         }
+                        
+    //         emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
             
-            refundExcessPayment(totalCost);
-            
-            emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
-            
-            return mintedTokenIDs;
-        }else{
-            require(types.length == 1,'Exceeded maximum number of NFTs with discount');
-            require(!usedDiscounts[msg.sender], "You have already minted an NFT.");
-            require(verifyProof(proof,merkleRoot, keccak256(abi.encodePacked(msg.sender, types[0], discount))), "Invalid proof.");
-            usedDiscounts[msg.sender] = true;
+    //         return mintedTokenIDs;
+    //     }else{
+    //         require(!usedDiscounts[msg.sender], "You have already minted an NFT.");
+    //         uint256 totalCost = calculateTotalCost(types);
+    //         uint256 discountAmount = (totalCost - msg.value);
+    //         for (uint256 i = 0; i < types.length; i++) {
+    //         uint256 nftType = types[i];
+    //             if (verifyProof(proof,merkleRoot, keccak256(abi.encodePacked(msg.sender, nftType, (discountAmount*100)/prices[nftType])))){
+    //                     usedDiscounts[msg.sender] = true;
+    //                     uint256[] memory mintedTokenIDs = new uint256[](types.length);
 
-            uint256[] memory tokenID = _mintWithDiscount(types[0],discount);
-            emit NFTsMinted(msg.sender, tokenID);
-            return tokenID;
+    //                     for (uint256 j = 0; j < types.length; j++) {
+    //                     uint256 _nftType = types[j];
+    //                     uint256 _tokenID = getNextRandom(_nftType);
+    //                     _safeMint(msg.sender, _tokenID);
+    //                     mintedTokenIDs[j] = _tokenID;
+    //                     updateTotalSupply(nftType);
+    //             }
+                            
+    //                 emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
+            
+    //                 return mintedTokenIDs;
+    //             }
+            
+    //         }
 
+    //     }
+    //     require(false,"Invalid proof");
+
+    // }
+    function publicMint(uint256[] calldata types, bytes32[] calldata proof) external payable returns (uint256[] memory) {
+    require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
+    require(!_paused, "Minting is paused");
+
+    if (proof.length == 0) {
+        uint256 totalCost = calculateTotalCost(types);
+        require(msg.value == totalCost, "Insufficient funds sent");
+
+        uint256[] memory mintedTokenIDs = new uint256[](types.length);
+
+        for (uint256 i = 0; i < types.length; i++) {
+            uint256 nftType = types[i];
+            uint256 tokenID = getNextRandom(nftType);
+            _safeMint(msg.sender, tokenID);
+            mintedTokenIDs[i] = tokenID;
+            updateTotalSupply(nftType);
         }
+                    
+        emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
+        
+        return mintedTokenIDs;
+    } else {
+        require(!usedDiscounts[msg.sender], "You have already minted an NFT.");
 
+        uint256 totalCost = calculateTotalCost(types);
+        uint256 discountAmount = (totalCost - msg.value);
+
+        for (uint256 i = 0; i < types.length; i++) {
+            uint256 nftType = types[i];
+
+            if (verifyProof(proof, merkleRoot, keccak256(abi.encodePacked(msg.sender, nftType, (discountAmount * 100) / prices[nftType])))) {
+                usedDiscounts[msg.sender] = true;
+                uint256[] memory mintedTokenIDs = new uint256[](types.length);
+
+                for (uint256 j = 0; j < types.length; j++) {
+                    uint256 _nftType = types[j];
+                    uint256 _tokenID = getNextRandom(_nftType);
+                    _safeMint(msg.sender, _tokenID);
+                    mintedTokenIDs[j] = _tokenID;
+                    updateTotalSupply(nftType);
+                }
+                    
+                emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
+        
+                return mintedTokenIDs;
+            }
+        }
     }
+
+    revert("Invalid proof");
+    }
+
     function _mintWithDiscount(uint256 nftType, uint256 discount) internal returns (uint256[] memory) {
         require(nftType >= 0 && nftType <= 2, "Invalid NFT type");
         require(!_paused, "Minting is paused");
