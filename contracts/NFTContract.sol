@@ -1033,11 +1033,17 @@ contract NFTContract is newerRandom,ERC721 {
     uint256 public totalSupply;
     
     bool _paused = false;
+    bool _launched = false;
     
-
+    // merkle-Root
     mapping(address => bool) private usedDiscounts;
-
     bytes32 private merkleRoot;
+    
+    //signature
+    mapping(address => bool) public isWitness;
+    address[] public witnessesList;
+
+    mapping(bytes32 => bool) internal usedSignatures;
 
     event NFTsMinted(address indexed minter, uint256[] tokenIDs);
 
@@ -1045,11 +1051,19 @@ contract NFTContract is newerRandom,ERC721 {
         require(msg.sender == ownerAddress, 'only owner');
         _;
     }
-    
+    modifier isLaunched() {
+        require(_launched == true, 'Contract is not launched');
+        _;
+    }
+
     function isPaused() public view returns (bool) {
         return _paused;
     }
 
+    function launchContract() external onlyOwner {
+        require(!_launched, "Contract is already launched");
+        _launched = true;
+    }
     function setPaused(bool paused_) public onlyOwner {
         _paused = paused_;
     }
@@ -1070,6 +1084,23 @@ contract NFTContract is newerRandom,ERC721 {
         require(merkleRoot == bytes32(0), "Merkle root already set");
         merkleRoot = _root;
     }
+        function setWitnesses(address[] memory _witnesses) external {
+        // Reset the old witnesses
+        for (uint256 i = 0; i < witnessesList.length; i++) {
+            address witness = witnessesList[i];
+            isWitness[witness] = false;
+        }
+        delete witnessesList;
+
+        // Set the new witnesses list and check for duplicates
+        for (uint256 i = 0; i < _witnesses.length; i++) {
+            address witness = _witnesses[i];
+            if (!isWitness[witness]) {
+                isWitness[witness] = true;
+                witnessesList.push(witness);
+            }
+        }
+    }
 
     function verifyProof(bytes32[] memory proof,bytes32 root,bytes32 leaf ) internal pure returns (bool) {
         
@@ -1086,8 +1117,29 @@ contract NFTContract is newerRandom,ERC721 {
         }
         return computedHash == root;
     }
-    
-    function publicMint(uint256[] calldata types, bytes32[] calldata proof) external payable returns (uint256[] memory) {
+    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        assembly {
+            r := mload(add(signature, 32))
+            s := mload(add(signature, 64))
+            v := byte(0, mload(add(signature, 96)))
+        }
+
+        if (v < 27) {
+            v += 27;
+        }
+
+        if (v != 27 && v != 28) {
+            return address(0);
+        }
+
+        return ecrecover(hash, v, r, s);
+    }
+
+    function publicMint(uint256[] calldata types, bytes32[] calldata proof) external payable isLaunched returns (uint256[] memory) {
     require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
     require(!_paused, "Minting is paused");
 
@@ -1137,6 +1189,47 @@ contract NFTContract is newerRandom,ERC721 {
     }
 
     revert("Invalid proof");
+    }
+    function earlyMint(uint256[] calldata types,uint256 index,bytes[] calldata signatures) external payable returns(uint256[] memory){
+        
+        console.log(msg.sender);
+        require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
+        require(!_paused, "Minting is paused");
+        
+        // require(signatures.length % 65 == 0, "invalid signature length");
+        bytes32 key = keccak256(abi.encodePacked(types, index, msg.sender));
+        console.logBytes32(key);
+        require(usedSignatures[key] == false, "signatures has been used");
+        
+        uint256 numOfSignatures = signatures.length;
+        address[] memory witnesses = new address[](numOfSignatures);
+        for (uint256 i = 0; i < numOfSignatures; i++) {
+            address witness = recover(key, signatures[i]);
+            console.logAddress(witness);
+            require(isWitness[witness], "invalid signature");
+            for (uint256 j = 0; j < i; j++) {
+                require(witness != witnesses[j], "duplicate witness");
+            }
+            witnesses[i] = witness;
+        }
+        require(numOfSignatures * 3 > witnessesList.length* 2, "insufficient witnesses");
+        // minting:
+        uint256 totalCost = calculateTotalCost(types);
+        require(msg.value == totalCost, "Insufficient funds sent");
+
+        uint256[] memory mintedTokenIDs = new uint256[](types.length);
+
+        for (uint256 i = 0; i < types.length; i++) {
+            uint256 nftType = types[i];
+            uint256 tokenID = getNextRandom(nftType);
+            _safeMint(msg.sender, tokenID);
+            mintedTokenIDs[i] = tokenID;
+            updateTotalSupply(nftType);
+        }
+                    
+        emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
+        
+        return mintedTokenIDs;
     }
 
     function calculateTotalCost(uint256[] calldata types) internal view returns (uint256) {

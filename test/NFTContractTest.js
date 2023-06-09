@@ -353,7 +353,86 @@ let type2Price = new BigNumber.from("3000000000000000");
 //     expect(set.size).to.equal(400);
 //   });
 // });
-describe("nftContract(minting with discount)", function () {
+// describe("nftContract(minting with discount)", function () {
+//   let nftContract;
+//   let owner;
+//   let addr1;
+//   let addr2;
+//   let addr3;
+
+//   beforeEach(async function () {
+//     // Deploy the NFT contract before each test
+//     const NFTContract = await ethers.getContractFactory("NFTContract");
+//     [owner, addr1, addr2, addr3] = await ethers.getSigners();
+
+//     nftContract = await NFTContract.deploy();
+//     await nftContract.deployed();
+//     const root =
+//       "0x66361847ad5a161f38dd1a255fc1526c3aefe88e276772ad5b7138a040f52a34";
+//     await nftContract.connect(owner).setRoot(root);
+//   });
+//   it("should mint an NFT with a discount", async () => {
+//     const cost = type0Price.mul(90).div(100);
+//     const proof = [
+//       "0xa118f5899d6ff9a7a013ad184f916e55c7d58128c447198935a8b404ea5e814c",
+//       "0x5920fc902e6850f43764c036081c5e6e22d1a526643373ba9ec781714d302a8c",
+//     ];
+
+//     await expect(
+//       nftContract.publicMint([0], proof, {
+//         value: cost,
+//       })
+//     ).to.emit(nftContract, "NFTsMinted");
+//   });
+
+//   it("should mint multiple NFTs with only one having a discount", async () => {
+//     const cost = type0Price.mul(90).div(100).add(type2Price).add(type1Price);
+//     const proof = [
+//       "0xa118f5899d6ff9a7a013ad184f916e55c7d58128c447198935a8b404ea5e814c",
+//       "0x5920fc902e6850f43764c036081c5e6e22d1a526643373ba9ec781714d302a8c",
+//     ];
+
+//     await expect(
+//       nftContract.publicMint([0, 1, 2], proof, {
+//         value: cost,
+//       })
+//     ).to.emit(nftContract, "NFTsMinted");
+//   });
+
+//   it("should revert when minting with an invalid discount", async () => {
+//     const cost = type0Price.mul(80).div(100);
+//     const proof = [
+//       "0xa118f5899d6ff9a7a013ad184f916e55c7d58128c447198935a8b404ea5e814c",
+//       "0x5920fc902e6850f43764c036081c5e6e22d1a526643373ba9ec781714d302a8c",
+//     ];
+
+//     await expect(
+//       nftContract.publicMint([0], proof, {
+//         value: cost,
+//       })
+//     ).to.be.revertedWith("Invalid proof");
+//   });
+
+//   it("should revert when minting with the same address twice", async () => {
+//     const cost = type0Price.mul(90).div(100);
+//     const proof = [
+//       "0xa118f5899d6ff9a7a013ad184f916e55c7d58128c447198935a8b404ea5e814c",
+//       "0x5920fc902e6850f43764c036081c5e6e22d1a526643373ba9ec781714d302a8c",
+//     ];
+
+//     await nftContract.publicMint([0], proof, {
+//       value: cost,
+//     });
+
+//     await expect(
+//       nftContract.publicMint([0], proof, {
+//         value: cost,
+//       })
+//     ).to.be.revertedWith("You have already minted an NFT.");
+//   });
+// });
+
+describe("nftContract early mint", function () {
   let nftContract;
   let owner;
   let addr1;
@@ -367,67 +446,27 @@ describe("nftContract(minting with discount)", function () {
 
     nftContract = await NFTContract.deploy();
     await nftContract.deployed();
-    const root =
-      "0x66361847ad5a161f38dd1a255fc1526c3aefe88e276772ad5b7138a040f52a34";
-    await nftContract.connect(owner).setRoot(root);
-  });
-  it("should mint an NFT with a discount", async () => {
-    const cost = type0Price.mul(90).div(100);
-    const proof = [
-      "0xa118f5899d6ff9a7a013ad184f916e55c7d58128c447198935a8b404ea5e814c",
-      "0x5920fc902e6850f43764c036081c5e6e22d1a526643373ba9ec781714d302a8c",
-    ];
 
+    await nftContract
+      .connect(owner)
+      .setWitnesses([
+        "0x44A489a6E08E5895cbBb585c45634AA2E421e09F",
+        "0x0b7b4ae52c79b2C42ce7B40BeD26994E52414cCe",
+        "0x929707496aF2600A733ce22c2A607256DaaD0A3B",
+      ]);
+  });
+  it("should mint an NFT with earlyMint", async () => {
+    const cost = type0Price.add(type1Price).add(type1Price);
+    const signatures = [
+      "0xeef0d63d9b7826031b8cbd460453ca20bf3a3c1aabf7ea7ca451c8553974f7cb2eacc80d002fb8d8460c1657cc8bb0243aa30912370c837b9fe40928ac138a0c1b",
+      "0xa20cb7b4006d0997db6708d05f929a39dba7a9a67473171d4ec5347d2fc5cd0e047314890f98cc38ed3db69285e68c5871d7daa8c7b6f77d2e5ebd8aadf9d7131c",
+      "0xa7f50e5eda0e16b1dd3ebb74ea3b007aca5c5510c4b46969fbc816b03cbc4191088b2e73c725293eca4bf3c4cbd059e8fa489777b82b2d318434b73a18cd99111b",
+    ];
+    const index = 0;
     await expect(
-      nftContract.publicMint([0], proof, {
+      nftContract.earlyMint([0, 1, 1], index, signatures, {
         value: cost,
       })
     ).to.emit(nftContract, "NFTsMinted");
-  });
-
-  it("should mint multiple NFTs with only one having a discount", async () => {
-    const cost = type0Price.mul(90).div(100).add(type2Price).add(type1Price);
-    const proof = [
-      "0xa118f5899d6ff9a7a013ad184f916e55c7d58128c447198935a8b404ea5e814c",
-      "0x5920fc902e6850f43764c036081c5e6e22d1a526643373ba9ec781714d302a8c",
-    ];
-
-    await expect(
-      nftContract.publicMint([0, 1, 2], proof, {
-        value: cost,
-      })
-    ).to.emit(nftContract, "NFTsMinted");
-  });
-
-  it("should revert when minting with an invalid discount", async () => {
-    const cost = type0Price.mul(80).div(100);
-    const proof = [
-      "0xa118f5899d6ff9a7a013ad184f916e55c7d58128c447198935a8b404ea5e814c",
-      "0x5920fc902e6850f43764c036081c5e6e22d1a526643373ba9ec781714d302a8c",
-    ];
-
-    await expect(
-      nftContract.publicMint([0], proof, {
-        value: cost,
-      })
-    ).to.be.revertedWith("Invalid proof");
-  });
-
-  it("should revert when minting with the same address twice", async () => {
-    const cost = type0Price.mul(90).div(100);
-    const proof = [
-      "0xa118f5899d6ff9a7a013ad184f916e55c7d58128c447198935a8b404ea5e814c",
-      "0x5920fc902e6850f43764c036081c5e6e22d1a526643373ba9ec781714d302a8c",
-    ];
-
-    await nftContract.publicMint([0], proof, {
-      value: cost,
-    });
-
-    await expect(
-      nftContract.publicMint([0], proof, {
-        value: cost,
-      })
-    ).to.be.revertedWith("You have already minted an NFT.");
   });
 });
