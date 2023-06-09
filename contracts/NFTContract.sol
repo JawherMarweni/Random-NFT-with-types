@@ -1117,29 +1117,32 @@ contract NFTContract is newerRandom,ERC721 {
         }
         return computedHash == root;
     }
-    function recover(bytes32 hash, bytes memory signature) internal pure returns (address) {
-        bytes32 r;
-        bytes32 s;
-        uint8 v;
+function recoverSigner(bytes32 _hash, bytes memory _signature) public pure returns (address) {
+    require(_signature.length == 65, "Invalid signature length");
+    bytes32 messageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
 
-        assembly {
-            r := mload(add(signature, 32))
-            s := mload(add(signature, 64))
-            v := byte(0, mload(add(signature, 96)))
-        }
-
-        if (v < 27) {
-            v += 27;
-        }
-
-        if (v != 27 && v != 28) {
-            return address(0);
-        }
-
-        return ecrecover(hash, v, r, s);
+    assembly {
+        // Extract r, s, and v from the signature
+        r := mload(add(_signature, 32))
+        s := mload(add(_signature, 64))
+        v := byte(0, mload(add(_signature, 96)))
     }
 
-    function publicMint(uint256[] calldata types, bytes32[] calldata proof) external payable isLaunched returns (uint256[] memory) {
+    // EIP-2: To support eth_sign and personal_sign, we need to adjust the v value
+    if (v < 27) {
+        v += 27;
+    }
+
+    // Recover the signer's address
+    address signer = ecrecover(messageHash, v, r, s);
+    return signer;
+}
+
+
+    function publicMint(uint256[] calldata types, bytes32[] calldata proof) external payable isLaunched returns (bool) {
     require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
     require(!_paused, "Minting is paused");
 
@@ -1147,19 +1150,13 @@ contract NFTContract is newerRandom,ERC721 {
         uint256 totalCost = calculateTotalCost(types);
         require(msg.value == totalCost, "Insufficient funds sent");
 
-        uint256[] memory mintedTokenIDs = new uint256[](types.length);
-
         for (uint256 i = 0; i < types.length; i++) {
             uint256 nftType = types[i];
             uint256 tokenID = getNextRandom(nftType);
             _safeMint(msg.sender, tokenID);
-            mintedTokenIDs[i] = tokenID;
             updateTotalSupply(nftType);
         }
-                    
-        emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
-        
-        return mintedTokenIDs;
+        return true;
     } else {
         require(!usedDiscounts[msg.sender], "You have already minted an NFT.");
 
@@ -1171,41 +1168,29 @@ contract NFTContract is newerRandom,ERC721 {
             uint256 discount = ((discountAmount * 100) / prices[nftType]);
             if (verifyProof(proof, merkleRoot, keccak256(abi.encodePacked(msg.sender,discount)))) {
                 usedDiscounts[msg.sender] = true;
-                uint256[] memory mintedTokenIDs = new uint256[](types.length);
-
                 for (uint256 j = 0; j < types.length; j++) {
                     uint256 _nftType = types[j];
                     uint256 _tokenID = getNextRandom(_nftType);
                     _safeMint(msg.sender, _tokenID);
-                    mintedTokenIDs[j] = _tokenID;
                     updateTotalSupply(nftType);
                 }
-                    
-                emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
-        
-                return mintedTokenIDs;
+                return true;
             }
         }
+        revert("Invalid proof");
     }
-
-    revert("Invalid proof");
     }
-    function earlyMint(uint256[] calldata types,uint256 index,bytes[] calldata signatures) external payable returns(uint256[] memory){
-        
-        console.log(msg.sender);
+    function earlyMint(uint256[] calldata types,uint256 index,bytes[] calldata signatures) external payable returns(bool){
         require(types.length <= 3, "Exceeded maximum number of NFTs to mint");
         require(!_paused, "Minting is paused");
         
-        // require(signatures.length % 65 == 0, "invalid signature length");
         bytes32 key = keccak256(abi.encodePacked(types, index, msg.sender));
-        console.logBytes32(key);
         require(usedSignatures[key] == false, "signatures has been used");
         
         uint256 numOfSignatures = signatures.length;
         address[] memory witnesses = new address[](numOfSignatures);
         for (uint256 i = 0; i < numOfSignatures; i++) {
-            address witness = recover(key, signatures[i]);
-            console.logAddress(witness);
+            address witness = recoverSigner(key, signatures[i]);
             require(isWitness[witness], "invalid signature");
             for (uint256 j = 0; j < i; j++) {
                 require(witness != witnesses[j], "duplicate witness");
@@ -1213,23 +1198,18 @@ contract NFTContract is newerRandom,ERC721 {
             witnesses[i] = witness;
         }
         require(numOfSignatures * 3 > witnessesList.length* 2, "insufficient witnesses");
+        usedSignatures[key] = true;
         // minting:
         uint256 totalCost = calculateTotalCost(types);
         require(msg.value == totalCost, "Insufficient funds sent");
-
-        uint256[] memory mintedTokenIDs = new uint256[](types.length);
 
         for (uint256 i = 0; i < types.length; i++) {
             uint256 nftType = types[i];
             uint256 tokenID = getNextRandom(nftType);
             _safeMint(msg.sender, tokenID);
-            mintedTokenIDs[i] = tokenID;
             updateTotalSupply(nftType);
-        }
-                    
-        emit NFTsMinted(msg.sender, mintedTokenIDs); // Emitting event with minter's address and minted token IDs
-        
-        return mintedTokenIDs;
+        }    
+        return true;    
     }
 
     function calculateTotalCost(uint256[] calldata types) internal view returns (uint256) {

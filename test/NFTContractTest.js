@@ -382,7 +382,7 @@ let type2Price = new BigNumber.from("3000000000000000");
 //       nftContract.publicMint([0], proof, {
 //         value: cost,
 //       })
-//     ).to.emit(nftContract, "NFTsMinted");
+//     ).to.emit(nftContract, "Transfer");
 //   });
 
 //   it("should mint multiple NFTs with only one having a discount", async () => {
@@ -396,7 +396,7 @@ let type2Price = new BigNumber.from("3000000000000000");
 //       nftContract.publicMint([0, 1, 2], proof, {
 //         value: cost,
 //       })
-//     ).to.emit(nftContract, "NFTsMinted");
+//     ).to.emit(nftContract, "Transfer");
 //   });
 
 //   it("should revert when minting with an invalid discount", async () => {
@@ -440,7 +440,6 @@ describe("nftContract early mint", function () {
   let addr3;
 
   beforeEach(async function () {
-    // Deploy the NFT contract before each test
     const NFTContract = await ethers.getContractFactory("NFTContract");
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
@@ -455,18 +454,95 @@ describe("nftContract early mint", function () {
         "0x929707496aF2600A733ce22c2A607256DaaD0A3B",
       ]);
   });
-  it("should mint an NFT with earlyMint", async () => {
-    const cost = type0Price.add(type1Price).add(type1Price);
-    const signatures = [
-      "0xeef0d63d9b7826031b8cbd460453ca20bf3a3c1aabf7ea7ca451c8553974f7cb2eacc80d002fb8d8460c1657cc8bb0243aa30912370c837b9fe40928ac138a0c1b",
-      "0xa20cb7b4006d0997db6708d05f929a39dba7a9a67473171d4ec5347d2fc5cd0e047314890f98cc38ed3db69285e68c5871d7daa8c7b6f77d2e5ebd8aadf9d7131c",
-      "0xa7f50e5eda0e16b1dd3ebb74ea3b007aca5c5510c4b46969fbc816b03cbc4191088b2e73c725293eca4bf3c4cbd059e8fa489777b82b2d318434b73a18cd99111b",
-    ];
+  it("should revert if publicMint is called before the launch", async () => {
+    const cost = type0Price.add(type1Price).add(type2Price);
+
     const index = 0;
     await expect(
-      nftContract.earlyMint([0, 1, 1], index, signatures, {
+      nftContract.publicMint([0, 1, 2], [], {
         value: cost,
       })
-    ).to.emit(nftContract, "NFTsMinted");
+    ).to.be.revertedWith("Contract is not launched");
+  });
+  it("should mint an NFT with earlyMint before the launch", async () => {
+    const cost = type0Price.add(type1Price).add(type2Price);
+    const signatures = [
+      "0x0f596340e58fa08c9769df2757124e18a2b937917ca3830e5a51dc35258794262069412d6411846acb38cc02495f0457c8e54997fb6d2215d045758521970de71c",
+      "0xc73372549991b2f10a51b55b27b82c553824f1501acf48591ee5dfc162a634a579010a3a9da4ef0b640ef7bc8da3f9342cfb004861ffbd13434b5ac24fe156301c",
+      "0xeca2244bd8d7202ad752d9e996bb49d4088045a2d91d150d03260416cd5d77f6385452f46de44297fba2d54b9d12509eedb6f0bc2bdf3cdda7f22b95af1663da1c",
+    ];
+
+    const index = 0;
+    await expect(
+      nftContract.earlyMint([0, 1, 2], index, signatures, {
+        value: cost,
+      })
+    ).to.emit(nftContract, "Transfer");
+  });
+  it("should revert if the signatures are insufficient(>3/2)", async () => {
+    const cost = type0Price.add(type1Price).add(type2Price);
+    const signatures = [
+      "0x0f596340e58fa08c9769df2757124e18a2b937917ca3830e5a51dc35258794262069412d6411846acb38cc02495f0457c8e54997fb6d2215d045758521970de71c",
+      "0xc73372549991b2f10a51b55b27b82c553824f1501acf48591ee5dfc162a634a579010a3a9da4ef0b640ef7bc8da3f9342cfb004861ffbd13434b5ac24fe156301c",
+    ];
+
+    const index = 0;
+    await expect(
+      nftContract.earlyMint([0, 1, 2], index, signatures, {
+        value: cost,
+      })
+    ).to.be.revertedWith("insufficient witnesses");
+  });
+  it("should revert if we put dublicate signature", async () => {
+    const cost = type0Price.add(type1Price).add(type2Price);
+    const signatures = [
+      "0x0f596340e58fa08c9769df2757124e18a2b937917ca3830e5a51dc35258794262069412d6411846acb38cc02495f0457c8e54997fb6d2215d045758521970de71c",
+      "0xc73372549991b2f10a51b55b27b82c553824f1501acf48591ee5dfc162a634a579010a3a9da4ef0b640ef7bc8da3f9342cfb004861ffbd13434b5ac24fe156301c",
+      "0xc73372549991b2f10a51b55b27b82c553824f1501acf48591ee5dfc162a634a579010a3a9da4ef0b640ef7bc8da3f9342cfb004861ffbd13434b5ac24fe156301c",
+    ];
+
+    const index = 0;
+    await expect(
+      nftContract.earlyMint([0, 1, 2], index, signatures, {
+        value: cost,
+      })
+    ).to.be.revertedWith("duplicate witness");
+  });
+  it("should revert if incorrect funds are sent", async () => {
+    const cost = type0Price.add(type1Price).add(type2Price).add(-1);
+    const signatures = [
+      "0x0f596340e58fa08c9769df2757124e18a2b937917ca3830e5a51dc35258794262069412d6411846acb38cc02495f0457c8e54997fb6d2215d045758521970de71c",
+      "0xc73372549991b2f10a51b55b27b82c553824f1501acf48591ee5dfc162a634a579010a3a9da4ef0b640ef7bc8da3f9342cfb004861ffbd13434b5ac24fe156301c",
+      "0xeca2244bd8d7202ad752d9e996bb49d4088045a2d91d150d03260416cd5d77f6385452f46de44297fba2d54b9d12509eedb6f0bc2bdf3cdda7f22b95af1663da1c",
+    ];
+
+    const index = 0;
+    await expect(
+      nftContract.earlyMint([0, 1, 2], index, signatures, {
+        value: cost,
+      })
+    ).to.be.revertedWith("Insufficient funds sent");
+  });
+  it("should revert if the same signature is used twice", async () => {
+    const cost = type0Price.add(type1Price).add(type2Price);
+    const signatures = [
+      "0x0f596340e58fa08c9769df2757124e18a2b937917ca3830e5a51dc35258794262069412d6411846acb38cc02495f0457c8e54997fb6d2215d045758521970de71c",
+      "0xc73372549991b2f10a51b55b27b82c553824f1501acf48591ee5dfc162a634a579010a3a9da4ef0b640ef7bc8da3f9342cfb004861ffbd13434b5ac24fe156301c",
+      "0xeca2244bd8d7202ad752d9e996bb49d4088045a2d91d150d03260416cd5d77f6385452f46de44297fba2d54b9d12509eedb6f0bc2bdf3cdda7f22b95af1663da1c",
+    ];
+
+    const index = 0;
+
+    await expect(
+      nftContract.earlyMint([0, 1, 2], index, signatures, {
+        value: cost,
+      })
+    ).to.emit(nftContract, "Transfer");
+
+    await expect(
+      nftContract.earlyMint([0, 1, 2], index, signatures, {
+        value: cost,
+      })
+    ).to.be.revertedWith("signatures has been used");
   });
 });
